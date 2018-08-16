@@ -179,7 +179,7 @@ public class BluetoothService {
     }
 
     /**
-     * 监听外部主蓝牙设备线程
+     * 监听外部主蓝牙设备线程(服务器端)
      */
     private class AcceptThread extends Thread {
        
@@ -201,7 +201,7 @@ public class BluetoothService {
             setName("AcceptThread");
             BluetoothSocket socket = null;
             // 监听端口直到连接上
-            while (BtState != CONNECTED) {
+            while (true) {
                 try {
                     //成功连接时退出循环
                     socket = mBtServSocket.accept();
@@ -214,7 +214,7 @@ public class BluetoothService {
                     synchronized (BluetoothService.this) {
                         switch (BtState) {
                         case LISTENING:
-                        case CONNECTING:
+                            case CONNECTING:
                             // 启动已连接线程
                             connected(socket, socket.getRemoteDevice());
                             break;
@@ -236,7 +236,7 @@ public class BluetoothService {
 
 
 
-
+//  关闭套接字
         public void cancel() {
             if (DEBUG) Log.e(TAG, "cancel " + this);
             try {
@@ -246,8 +246,13 @@ public class BluetoothService {
             }
         }
     }
+
+
+
+
+
     /**
-     * 连接蓝牙设备的线程
+     * 连接蓝牙设备的线程（客户端）
      */
     private class ConnectThread extends Thread {
         private final BluetoothSocket mBtSocket;
@@ -303,6 +308,17 @@ public class BluetoothService {
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * 已连接的相关处理线程

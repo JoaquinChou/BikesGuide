@@ -21,6 +21,7 @@ import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -50,6 +51,7 @@ import com.amap.api.services.geocoder.RegeocodeResult;
 import com.amap.api.services.help.Tip;
 import com.amap.api.services.poisearch.PoiResult;
 import com.amap.api.services.poisearch.PoiSearch;
+import com.example.joaquinchou.bikesguide.bluetooth.BluetoothService;
 import com.example.joaquinchou.bikesguide.utils.Constants;
 import com.example.joaquinchou.bikesguide.utils.MapUtils;
 
@@ -100,7 +102,9 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
     private static final int REQUEST_ENABLE_BT = 2;
 //蓝牙适配器
     private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothService mConnectService = null;
 
+    private float angle = 16.1f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,8 +123,10 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
             finish();
             return;
         }
-    }
 
+//        把角度转化为十六进制数并进行传送
+        sendMessage(toHexString(angle));
+    }
     //    显示配对对话框
     public void showDialog(){
         AlertDialog.Builder dialog = new AlertDialog.Builder(ShowMapActivity.this);
@@ -144,6 +150,49 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
 
         dialog.show();
     }
+
+//角度转换为十六进制数
+    public String toHexString(float i) {
+
+    int x = Math.round(i);
+    Integer temp = new Integer(x);
+    String hex = Integer.toHexString(temp);
+//    int angle = Integer.parseInt(hex);
+    return hex;
+
+}
+
+
+    /**
+     *
+     * 按键触发发送字符串
+     * @param Str2Send  欲发送的字符串.
+     */
+    private void sendMessage(String Str2Send) {
+
+        if (mConnectService == null || mConnectService.getState() != BluetoothService.CONNECTED) {
+            Toast.makeText(this, "未连接到任何蓝牙设备", Toast.LENGTH_SHORT).show();
+            return;
+        } else if (Str2Send == null || mConnectService == null || Str2Send.equals(""))
+            return;
+
+
+        byte[] bs;
+            bs = Str2Send.getBytes();
+            mConnectService.write(bs);
+
+            String[] ss = Str2Send.split(" ");
+            bs = new byte[1];
+//        Log.d("ShowMapActivity",Str2Send);
+        Toast.makeText(ShowMapActivity.this,Str2Send,Toast.LENGTH_LONG).show();
+            for (String s : ss) {
+                if (s.length() != 0) {
+                    bs[0] = (byte) (int) Integer.valueOf(s, 16);
+                    mConnectService.write(bs);
+                }
+            }
+        }
+
 
 
 //判断用户是否有所需权限
@@ -330,7 +379,6 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
                 poi.getCoordinate().longitude)));
     }
 
-
     //用户当前定位返回处理
     @Override
     public void onMyLocationChange(Location location) {
@@ -353,7 +401,6 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
             }
         }
     }
-
 
     //界面中按钮点击事件处理
     @Override
@@ -386,10 +433,6 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
             default:
         }
     }
-
-
-
-
 
 
     //权限请求结果处理
