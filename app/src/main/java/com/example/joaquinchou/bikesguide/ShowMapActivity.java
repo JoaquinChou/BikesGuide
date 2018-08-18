@@ -2,12 +2,12 @@ package com.example.joaquinchou.bikesguide;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.content.DialogInterface;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.provider.Settings;
+
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
@@ -18,7 +18,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.NestedScrollView;
-import android.support.v7.app.AlertDialog;
+
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,8 +26,6 @@ import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,7 +49,6 @@ import com.amap.api.services.geocoder.RegeocodeResult;
 import com.amap.api.services.help.Tip;
 import com.amap.api.services.poisearch.PoiResult;
 import com.amap.api.services.poisearch.PoiSearch;
-import com.example.joaquinchou.bikesguide.bluetooth.BluetoothService;
 import com.example.joaquinchou.bikesguide.utils.Constants;
 import com.example.joaquinchou.bikesguide.utils.MapUtils;
 
@@ -81,28 +78,12 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
     private DrawerLayout drawerLayout = null;
     private FloatingActionButton locate = null;
     private FloatingActionButton plan = null;
+    private FloatingActionButton bluetooth = null;
     private TextView search = null;
     private ImageButton menu = null;
     private NavigationView navigationView = null;
 
-    private static final String TAG = "MainActivity";
-    private static final boolean DEBUG = false;
 
-    public static final int REC_DATA = 2;
-    public static final int CONNECTED_DEVICE_NAME = 4;
-    public static final int BT_TOAST = 5;
-    public static final int MAIN_TOAST = 6;
-
-    // 标志字符串常量
-    public static final String DEVICE_NAME = "device name";
-    public static final String TOAST = "toast";
-
-    // 意图请求码
-    private static final int REQUEST_CONNECT_DEVICE = 1;
-    private static final int REQUEST_ENABLE_BT = 2;
-//蓝牙适配器
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothService mConnectService = null;
 
     private float angle = 16.1f;
 
@@ -115,41 +96,8 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
         mapView.onCreate(savedInstanceState);
         checkPermission();
 
-//        蓝牙进行配对
-        showDialog();
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(this, "设备不存在蓝牙", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-
-//        把角度转化为十六进制数并进行传送
-        sendMessage(toHexString(angle));
     }
-    //    显示配对对话框
-    public void showDialog(){
-        AlertDialog.Builder dialog = new AlertDialog.Builder(ShowMapActivity.this);
-        dialog.setTitle("提示");
-        dialog.setMessage("该应用需要设置蓝牙的连接，请亲点击确认移步连接导航仪!");
-        dialog.setCancelable(false);
-        dialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
-                startActivity(intent);
-            }
-        });
 
-        dialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(ShowMapActivity.this,"亲已拒绝蓝牙开启，导航仪功能不能正常使用！",Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        dialog.show();
-    }
 
 //角度转换为十六进制数
     public String toHexString(float i) {
@@ -163,35 +111,7 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
 }
 
 
-    /**
-     *
-     * 按键触发发送字符串
-     * @param Str2Send  欲发送的字符串.
-     */
-    private void sendMessage(String Str2Send) {
 
-        if (mConnectService == null || mConnectService.getState() != BluetoothService.CONNECTED) {
-            Toast.makeText(this, "未连接到任何蓝牙设备", Toast.LENGTH_SHORT).show();
-            return;
-        } else if (Str2Send == null || mConnectService == null || Str2Send.equals(""))
-            return;
-
-
-        byte[] bs;
-            bs = Str2Send.getBytes();
-            mConnectService.write(bs);
-
-            String[] ss = Str2Send.split(" ");
-            bs = new byte[1];
-//        Log.d("ShowMapActivity",Str2Send);
-        Toast.makeText(ShowMapActivity.this,Str2Send,Toast.LENGTH_LONG).show();
-            for (String s : ss) {
-                if (s.length() != 0) {
-                    bs[0] = (byte) (int) Integer.valueOf(s, 16);
-                    mConnectService.write(bs);
-                }
-            }
-        }
 
 
 
@@ -250,6 +170,7 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         locate = (FloatingActionButton) findViewById(R.id.fab_locate);
         plan = (FloatingActionButton) findViewById(R.id.fab_plan);
+        bluetooth = (FloatingActionButton)findViewById(R.id.ble);
         textName = (TextView) findViewById(R.id.text_name);
         textName.setText("我的位置");
         textDistance = (TextView) findViewById(R.id.text_distance);
@@ -274,6 +195,7 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
     private void registerLayoutListener(){
         locate.setOnClickListener(this);
         plan.setOnClickListener(this);
+        bluetooth.setOnClickListener(this);
         search.setOnClickListener(this);
        menu.setOnClickListener(this);
         navigationView.setNavigationItemSelectedListener(this);
@@ -391,6 +313,7 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
                 aMap.animateCamera(CameraUpdateFactory.
                         newLatLngZoom(new LatLng(location.getLatitude(),
                                 location.getLongitude()), 16f));
+//                Log.v("XXXXXXXXX","Position"+location);
             }
         } else {
             if(isFirstLocate) {
@@ -429,6 +352,10 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
                 break;
             case R.id.expanded_menu:
                 drawerLayout.openDrawer(GravityCompat.START);
+                break;
+            case R.id.ble:
+                Intent intent = new Intent(ShowMapActivity.this,BleMainActivity.class);
+                startActivity(intent);
                 break;
             default:
         }
