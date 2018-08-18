@@ -23,7 +23,7 @@ import java.util.List;
 
 public class BleMainActivity extends AppCompatActivity {
 
-//    private static final String MAC = "00:0E:0B:02:E2:5C";
+    private static final String MAC = "00:0E:0B:02:E2:5C";
 
 
 
@@ -45,9 +45,6 @@ public class BleMainActivity extends AppCompatActivity {
 
         mRefreshLayout = (PullToRefreshFrameLayout) findViewById(R.id.pull_layout);
 
-        if (mRefreshLayout == null) {
-            Log.e("NullPointer","XXXXXXXXXXXXXX");
-        }
         mListView = mRefreshLayout.getPullToRefreshListView();
         mAdapter = new DeviceListAdapter(this);
         mListView.setAdapter(mAdapter);

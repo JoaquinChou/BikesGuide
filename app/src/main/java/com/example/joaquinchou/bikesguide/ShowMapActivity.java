@@ -313,7 +313,7 @@ public class ShowMapActivity extends AppCompatActivity implements View.OnClickLi
                 aMap.animateCamera(CameraUpdateFactory.
                         newLatLngZoom(new LatLng(location.getLatitude(),
                                 location.getLongitude()), 16f));
-//                Log.v("XXXXXXXXX","Position"+location);
+                Log.v("AAAAAAAA","Position"+location);
             }
         } else {
             if(isFirstLocate) {

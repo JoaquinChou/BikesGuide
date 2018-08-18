@@ -13,6 +13,8 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.util.SparseArray;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,7 +22,9 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.AMapOptions;
 import com.amap.api.maps.MapView;
@@ -28,6 +32,8 @@ import com.amap.api.maps.UiSettings;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.navi.AMapNavi;
 import com.amap.api.navi.AMapNaviListener;
+import com.amap.api.navi.AMapNaviViewListener;
+import com.amap.api.navi.enums.NaviType;
 import com.amap.api.navi.model.AMapCalcRouteResult;
 import com.amap.api.navi.model.AMapLaneInfo;
 import com.amap.api.navi.model.AMapModelCross;
@@ -57,13 +63,15 @@ import com.example.joaquinchou.bikesguide.adapter.BusPathAdapter;
 import com.example.joaquinchou.bikesguide.adapter.RouteDetailAdapter;
 import com.example.joaquinchou.bikesguide.utils.Constants;
 import com.example.joaquinchou.bikesguide.utils.MapUtils;
+import com.amap.api.location.AMapLocation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class RouteActivity extends AppCompatActivity implements AMapNaviListener,
         RouteSearch.OnRouteSearchListener, TabLayout.OnTabSelectedListener,
-        View.OnClickListener, PoiSearch.OnPoiSearchListener {
+        View.OnClickListener, PoiSearch.OnPoiSearchListener, AMapNaviViewListener {
 
 
     private static final String MY_LOCATION="我的位置";
@@ -75,6 +83,10 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
     private static final int WALK_MODE=1;
     private static final int RIDE_MODE=2;
     private static final int BUS_MODE=3;
+    /**
+     * 保存当前算好的路线
+     */
+    private SparseArray<RouteOverLay> routeOverlays = new SparseArray<RouteOverLay>();
 
     private int isSearchingText=R.id.text_destination;
     private int curMode=0;
@@ -142,6 +154,7 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
             textDeparture.setText(MY_LOCATION);
             locationDeparture=MapUtils.convertToNaviLatLng(
                     (LatLng)intent.getParcelableExtra("curLocation"));
+
         }
         city=getIntent().getStringExtra("city");
         routeSearch=new RouteSearch(this);
@@ -149,8 +162,11 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
         if(locationDeparture!=null&&locationDestination!=null) {
             aMapNavi = AMapNavi.getInstance(getApplicationContext());
             aMapNavi.addAMapNaviListener(this);
-        }
+            aMapNavi.setEmulatorNaviSpeed(400);
+            AMapLocationClientOption mLocationOption = new AMapLocationClientOption();
+            mLocationOption.setMockEnable(true);
 
+                }
     }
 
     //初始化地图
@@ -573,7 +589,7 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
 
     @Override
     public void onStartNavi(int i) {
-
+        Toast.makeText(RouteActivity.this,"开始导航",Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -631,9 +647,31 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
 
     }
 
+    String angle = null;
     @Override
-    public void onNaviInfoUpdate(NaviInfo naviInfo) {
-
+    public void onNaviInfoUpdate(NaviInfo naviinfo) {
+//        Toast.makeText(RouteActivity.this,naviinfo.getIconType(),Toast.LENGTH_SHORT).show();
+        Log.v("AAAAAAAAAAA","next:"+naviinfo.getIconType());
+//        switch (naviinfo.getIconType()){
+//            case 2:
+//                Toast.makeText(RouteActivity.this,"左转",Toast.LENGTH_LONG).show();
+//                break;
+//            case 6:
+//                Toast.makeText(RouteActivity.this,"左后方",Toast.LENGTH_LONG).show();
+//                break;
+//            case 4:
+//                Toast.makeText(RouteActivity.this,"左前方",Toast.LENGTH_LONG).show();
+//                break;
+//            case 3:
+//                Toast.makeText(RouteActivity.this,"右转",Toast.LENGTH_LONG).show();
+//                break;
+//            case 5:
+//                Toast.makeText(RouteActivity.this,"右前方",Toast.LENGTH_LONG).show();
+//                break;
+//            case 9:
+//                Toast.makeText(RouteActivity.this,"直行",Toast.LENGTH_LONG).show();
+//                break;
+//        }
     }
 
     @Override
@@ -769,6 +807,51 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
+
+    @Override
+    public void onNaviSetting() {
+
+    }
+
+    @Override
+    public void onNaviCancel() {
+
+    }
+
+    @Override
+    public boolean onNaviBackClick() {
+        return false;
+    }
+
+    @Override
+    public void onNaviMapMode(int i) {
+
+    }
+
+    @Override
+    public void onNaviTurnClick() {
+
+    }
+
+    @Override
+    public void onNextRoadClick() {
+
+    }
+
+    @Override
+    public void onScanViewButtonClick() {
+
+    }
+
+    @Override
+    public void onLockMap(boolean b) {
+
+    }
+
+    @Override
+    public void onNaviViewLoaded() {
 
     }
 }

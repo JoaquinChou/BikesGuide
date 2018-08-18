@@ -1,12 +1,17 @@
 package com.example.joaquinchou.bikesguide;
 
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationListener;
@@ -33,16 +38,19 @@ import com.amap.api.navi.model.AMapServiceAreaInfo;
 import com.amap.api.navi.model.AimLessModeCongestionInfo;
 import com.amap.api.navi.model.AimLessModeStat;
 import com.amap.api.navi.model.NaviInfo;
+import com.amap.api.navi.enums.IconType;
 import com.autonavi.tbt.TrafficFacilityInfo;
 import com.example.joaquinchou.bikesguide.utils.NavigationVoiceController;
 
-public class NavigateActivity extends AppCompatActivity implements AMapNaviListener,AMapNaviViewListener{
+
+
+public class NavigateActivity extends AppCompatActivity implements AMapNaviListener,AMapNaviViewListener, View.OnClickListener {
 
 
     private AMapNaviView aMapNaviView=null;
     private AMapNavi aMapNavi=null;
     private AMap aMap;
-
+    private FloatingActionButton Code_text=null;
 
 
 
@@ -53,8 +61,10 @@ public class NavigateActivity extends AppCompatActivity implements AMapNaviListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigate);
         aMapNaviView=(AMapNaviView)findViewById(R.id.navigate_view);
+        Code_text=findViewById(R.id.code_text);
         aMapNaviView.onCreate(savedInstanceState);
         aMapNaviView.setAMapNaviViewListener(this);
+        Code_text.setOnClickListener(this);
 
         AMapNaviViewOptions options=new AMapNaviViewOptions();
         options.setReCalculateRouteForYaw(true);
@@ -64,7 +74,7 @@ public class NavigateActivity extends AppCompatActivity implements AMapNaviListe
         aMapNavi=AMapNavi.getInstance(getApplicationContext());
 //        aMapNavi.addAMapNaviListener(controller);
         AMapNavi.setTtsPlaying(false);
-        aMapNavi.startNavi(NaviType.GPS);
+        aMapNavi.startNavi(NaviType.EMULATOR);
 
 
 
@@ -224,7 +234,28 @@ public class NavigateActivity extends AppCompatActivity implements AMapNaviListe
 
     @Override
     public void onNaviInfoUpdate(NaviInfo naviInfo) {
-
+//        int next = naviInfo.getIconType();
+//        Toast.makeText(NavigateActivity.this,next,Toast.LENGTH_LONG).show();
+//        switch (next){
+//            case 2:
+//                Toast.makeText(NavigateActivity.this,"左转",Toast.LENGTH_LONG).show();
+//                break;
+//            case 6:
+//                Toast.makeText(NavigateActivity.this,"左后方",Toast.LENGTH_LONG).show();
+//                break;
+//            case 4:
+//                Toast.makeText(NavigateActivity.this,"左前方",Toast.LENGTH_LONG).show();
+//                break;
+//            case 3:
+//                Toast.makeText(NavigateActivity.this,"右转",Toast.LENGTH_LONG).show();
+//                break;
+//            case 5:
+//                Toast.makeText(NavigateActivity.this,"右前方",Toast.LENGTH_LONG).show();
+//                break;
+//            case 9:
+//                Toast.makeText(NavigateActivity.this,"直行",Toast.LENGTH_LONG).show();
+//                break;
+//        }
     }
 
     @Override
@@ -330,5 +361,10 @@ public class NavigateActivity extends AppCompatActivity implements AMapNaviListe
     @Override
     public void onCalculateRouteFailure(AMapCalcRouteResult aMapCalcRouteResult) {
 
+    }
+
+    @Override
+    public void onClick(View view) {
+        Toast.makeText(NavigateActivity.this,"2929",Toast.LENGTH_SHORT).show();
     }
 }
