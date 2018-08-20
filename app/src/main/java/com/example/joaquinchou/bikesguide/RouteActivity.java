@@ -33,7 +33,6 @@ import com.amap.api.maps.model.LatLng;
 import com.amap.api.navi.AMapNavi;
 import com.amap.api.navi.AMapNaviListener;
 import com.amap.api.navi.AMapNaviViewListener;
-import com.amap.api.navi.enums.NaviType;
 import com.amap.api.navi.model.AMapCalcRouteResult;
 import com.amap.api.navi.model.AMapLaneInfo;
 import com.amap.api.navi.model.AMapModelCross;
@@ -61,13 +60,33 @@ import com.amap.api.services.route.WalkRouteResult;
 import com.autonavi.tbt.TrafficFacilityInfo;
 import com.example.joaquinchou.bikesguide.adapter.BusPathAdapter;
 import com.example.joaquinchou.bikesguide.adapter.RouteDetailAdapter;
+import com.example.joaquinchou.bikesguide.utils.ClientManager;
+import com.example.joaquinchou.bikesguide.utils.CommonUtils;
 import com.example.joaquinchou.bikesguide.utils.Constants;
+import com.example.joaquinchou.bikesguide.utils.DeviceDetailAdapter;
+import com.example.joaquinchou.bikesguide.utils.Event;
 import com.example.joaquinchou.bikesguide.utils.MapUtils;
-import com.amap.api.location.AMapLocation;
+import com.example.joaquinchou.bikesguide.utils.MyApplication;
+import com.inuker.bluetooth.library.connect.listener.BleConnectStatusListener;
+import com.inuker.bluetooth.library.connect.options.BleConnectOptions;
+import com.inuker.bluetooth.library.connect.response.BleConnectResponse;
+import com.inuker.bluetooth.library.connect.response.BleNotifyResponse;
+import com.inuker.bluetooth.library.connect.response.BleReadResponse;
+import com.inuker.bluetooth.library.connect.response.BleUnnotifyResponse;
+import com.inuker.bluetooth.library.connect.response.BleWriteResponse;
+import com.inuker.bluetooth.library.model.BleGattProfile;
+import com.inuker.bluetooth.library.utils.BluetoothLog;
+import com.inuker.bluetooth.library.utils.ByteUtils;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
+
+import static com.inuker.bluetooth.library.Constants.REQUEST_SUCCESS;
+import static com.inuker.bluetooth.library.Constants.STATUS_CONNECTED;
+
 
 public class RouteActivity extends AppCompatActivity implements AMapNaviListener,
         RouteSearch.OnRouteSearchListener, TabLayout.OnTabSelectedListener,
@@ -83,6 +102,12 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
     private static final int WALK_MODE=1;
     private static final int RIDE_MODE=2;
     private static final int BUS_MODE=3;
+    private boolean mConnected;
+    private DeviceDetailAdapter mAdapter;
+    private String mDevice = "CC:78:AB:87:7C:84";
+    private String mMac = "CC:78:AB:87:7C:84";
+    private UUID mService = UUID.fromString("f0001130-0451-4000-b000-000000000000");
+    private UUID mCharacter = UUID.fromString("f0001131-0451-4000-b000-000000000000");
     /**
      * 保存当前算好的路线
      */
@@ -162,10 +187,9 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
         if(locationDeparture!=null&&locationDestination!=null) {
             aMapNavi = AMapNavi.getInstance(getApplicationContext());
             aMapNavi.addAMapNaviListener(this);
-            aMapNavi.setEmulatorNaviSpeed(400);
+            aMapNavi.setEmulatorNaviSpeed(200);
             AMapLocationClientOption mLocationOption = new AMapLocationClientOption();
             mLocationOption.setMockEnable(true);
-
                 }
     }
 
@@ -179,6 +203,50 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
         uiSettings.setMyLocationButtonEnabled(false);
         uiSettings.setZoomPosition(AMapOptions.ZOOM_POSITION_RIGHT_CENTER);
         uiSettings.setAllGesturesEnabled(false);
+    }
+    private final BleConnectStatusListener mConnectStatusListener = new BleConnectStatusListener() {
+        @Override
+        public void onConnectStatusChanged(String mac, int status) {
+
+            mConnected = (status == STATUS_CONNECTED);
+            connectDeviceIfNeeded();
+        }
+    };
+
+    private final BleWriteResponse mWriteRsp = new BleWriteResponse() {
+        @Override
+        public void onResponse(int code) {
+            if (code == REQUEST_SUCCESS) {
+//                CommonUtils.toast("success");
+            } else {
+//                CommonUtils.toast("failed");
+            }
+        }
+    };
+
+    private void connectDeviceIfNeeded() {
+        if (!mConnected) {
+            connectDevice();
+        }
+    }
+
+    private void connectDevice() {
+        BleConnectOptions options = new BleConnectOptions.Builder()
+                .setConnectRetry(3)
+                .setConnectTimeout(20000)
+                .setServiceDiscoverRetry(3)
+                .setServiceDiscoverTimeout(10000)
+                .build();
+
+        ClientManager.getClient().connect(mDevice, options, new BleConnectResponse() {
+            @Override
+            public void onResponse(int code, BleGattProfile profile) {
+
+                if (code == REQUEST_SUCCESS) {
+                    mAdapter.setGattProfile(profile);
+                }
+            }
+        });
     }
 
     //初始化界面
@@ -647,11 +715,56 @@ public class RouteActivity extends AppCompatActivity implements AMapNaviListener
 
     }
 
-    String angle = null;
+    public void GuideInformation(String angle) {
+        ClientManager.getClient().registerConnectStatusListener(mDevice, mConnectStatusListener);
+        connectDeviceIfNeeded();
+        ClientManager.getClient().write(mMac,mService,mCharacter,ByteUtils.stringToBytes(angle),mWriteRsp);
+    }
+
+
+    MyApplication ma = (MyApplication)getApplication();
     @Override
     public void onNaviInfoUpdate(NaviInfo naviinfo) {
+        Log.v("AAAAAAAAAAAA","next:"+naviinfo.getIconType());
+            switch (naviinfo.getIconType()){
+                case 3: //3为右转
+//                    Toast.makeText(RouteActivity.this,"右转",Toast.LENGTH_LONG).show();
+                    GuideInformation("025A");
+//                    Log.v("AAAAAAAAAAAA","next:"+naviinfo.getIconType());
+                    break;
+                case 2: //2为左转
+//                    Toast.makeText(RouteActivity.this,"左转",Toast.LENGTH_SHORT).show();
+                    GuideInformation("015A");
+//                    Log.v("AAAAAAAAAAAA","next:"+naviinfo.getIconType());
+                    break;
+                case 9: //9为直行
+//                    Toast.makeText(RouteActivity.this,"直行",Toast.LENGTH_SHORT).show();
+                    GuideInformation("0100");
+//                    Log.v("AAAAAAAAAAAA","next:"+naviinfo.getIconType());
+                    break;
+                case 4: //4为左前方
+//                    Toast.makeText(RouteActivity.this,"左前方",Toast.LENGTH_SHORT).show();
+                    GuideInformation("022D");
+//                    Log.v("AAAAAAAAAAAA","next:"+naviinfo.getIconType());
+                    break;
+                case 5: //5为右前方
+//                    Toast.makeText(RouteActivity.this,"右前方",Toast.LENGTH_SHORT).show();
+                    GuideInformation("012D");
+//                    Log.v("AAAAAAAAAAAA","next:"+naviinfo.getIconType());
+                    break;
+            }
 //        Toast.makeText(RouteActivity.this,naviinfo.getIconType(),Toast.LENGTH_SHORT).show();
-        Log.v("AAAAAAAAAAA","next:"+naviinfo.getIconType());
+//        Log.v("AAAAAAAAAAA","next:"+naviinfo.getIconType());
+//        if (naviinfo.getIconType() == 3) {
+//            ma.set_angle("0150");
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    //发送事件
+//                    EventBus.getDefault().post(new Event(angle));
+//                }
+//            }).start();
+//        }
 //        switch (naviinfo.getIconType()){
 //            case 2:
 //                Toast.makeText(RouteActivity.this,"左转",Toast.LENGTH_LONG).show();

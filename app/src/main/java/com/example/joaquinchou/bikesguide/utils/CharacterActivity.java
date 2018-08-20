@@ -3,6 +3,7 @@ package com.example.joaquinchou.bikesguide.utils;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,6 +18,10 @@ import com.inuker.bluetooth.library.connect.response.BleUnnotifyResponse;
 import com.inuker.bluetooth.library.connect.response.BleWriteResponse;
 import com.inuker.bluetooth.library.utils.BluetoothLog;
 import com.inuker.bluetooth.library.utils.ByteUtils;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.UUID;
 
@@ -45,12 +50,13 @@ public class CharacterActivity extends Activity implements View.OnClickListener 
     private Button mBtnUnnotify;
     private EditText mEtInputMtu;
     private Button mBtnRequestMtu;
+    MyApplication ma = (MyApplication)getApplication();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_character);
-
+        EventBus.getDefault().register(this);
         Intent intent = getIntent();
         mMac = intent.getStringExtra("mac");
         mService = (UUID) intent.getSerializableExtra("service");
@@ -82,12 +88,26 @@ public class CharacterActivity extends Activity implements View.OnClickListener 
         mBtnRequestMtu.setOnClickListener(this);
     }
 
+    String angle = null;
+    /**
+     * 事件响应方法
+     * 接收消息
+     * @param event
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEvent(Event event) {
+
+        String msg = event.getMessage();
+        angle = msg;
+        Log.v("BBBBBBBBBBBBBBB","angle"+angle);
+    }
+
     private final BleReadResponse mReadRsp = new BleReadResponse() {
         @Override
         public void onResponse(int code, byte[] data) {
             if (code == REQUEST_SUCCESS) {
                 mBtnRead.setText(String.format("read: %s", ByteUtils.byteToString(data)));
-                CommonUtils.toast("success");
+//                CommonUtils.toast("success");
             } else {
                 CommonUtils.toast("failed");
                 mBtnRead.setText("read");
@@ -157,8 +177,9 @@ public class CharacterActivity extends Activity implements View.OnClickListener 
                 ClientManager.getClient().read(mMac, mService, mCharacter, mReadRsp);
                 break;
             case R.id.write:
-                ClientManager.getClient().write(mMac, mService, mCharacter,
-                        ByteUtils.stringToBytes(mEtInput.getText().toString()), mWriteRsp);
+                    Log.v("AAAAAAAAAAA","mMac:"+mMac+"\nmService:"+mService+"\nmCharacter:"+mCharacter);
+                    ClientManager.getClient().write(mMac, mService, mCharacter,
+                            ByteUtils.stringToBytes(mEtInput.getText().toString()), mWriteRsp);
                 break;
             case R.id.notify:
                 ClientManager.getClient().notify(mMac, mService, mCharacter, mNotifyRsp);
@@ -209,6 +230,12 @@ public class CharacterActivity extends Activity implements View.OnClickListener 
     protected void onResume() {
         super.onResume();
         ClientManager.getClient().registerConnectStatusListener(mMac, mConnectStatusListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     @Override

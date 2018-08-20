@@ -74,11 +74,8 @@ public class NavigateActivity extends AppCompatActivity implements AMapNaviListe
         aMapNavi=AMapNavi.getInstance(getApplicationContext());
 //        aMapNavi.addAMapNaviListener(controller);
         AMapNavi.setTtsPlaying(false);
+//        aMapNavi.startNavi(NaviType.GPS);
         aMapNavi.startNavi(NaviType.EMULATOR);
-
-
-
-
     }
 
 

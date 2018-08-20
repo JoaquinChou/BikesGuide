@@ -10,6 +10,15 @@ import com.inuker.bluetooth.library.BluetoothContext;
 public class MyApplication extends Application {
 
     private static MyApplication instance;
+    private String _angle = "0000";
+
+    public String get_angle() {
+        return _angle;
+    }
+
+    public void set_angle(String s) {
+        _angle = s;
+    }
 
     public static Application getInstance() {
         return instance;
