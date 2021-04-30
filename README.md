@@ -19,7 +19,7 @@ The activities that have been implemented are
 <div align="center">  
 <img src="https://z3.ax1x.com/2021/04/30/gER4oj.jpg" width="300"/>
 </div>
-<b>Finally Congratulate to the <font color="red">Never Settle Team</font> to win the first Prize in TI Cup in 2018!!</b>
+<b>Finally, Congratulate to the <font color="red">Never Settle Team</font> to win the first Prize in TI Cup in 2018!!</b>
 In the future, we want to make this!
 <div align="center">  
 <img src="https://z3.ax1x.com/2021/04/30/gERhwQ.jpg" width="500"/>
